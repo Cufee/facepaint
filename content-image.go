@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/cufee/facepaint/style"
+	"github.com/fogleman/gg"
 	"github.com/nao1215/imaging"
 	"github.com/pkg/errors"
 )
@@ -83,22 +84,29 @@ func (content *contentImage) Render(layers layerContext, pos Position) error {
 		return err
 	}
 
+	childCtx := gg.NewContext(dimensions.Width, dimensions.Height)
+
+	// apply border radius
+	drawBackgroundPath(childCtx, computed, dimensions, Position{0, 0})
+	childCtx.Clip()
+
 	if computed.BackgroundColor != nil {
-		ctx.SetColor(computed.BackgroundColor)
-		drawBackgroundPath(ctx, computed, dimensions, pos)
-		ctx.Fill()
+		childCtx.SetColor(computed.BackgroundColor)
+		childCtx.Clear()
 	}
 	if computed.Debug {
-		ctx.SetColor(getDebugColor())
-		ctx.DrawRectangle(pos.X, pos.Y, float64(dimensions.Width), float64(dimensions.Height))
-		ctx.Stroke()
+		childCtx.SetColor(getDebugColor())
+		childCtx.DrawRectangle(0, 0, float64(dimensions.Width), float64(dimensions.Height))
+		childCtx.Stroke()
 	}
 
 	image := imaging.Resize(content.image, dimensions.Width, dimensions.Height, imaging.Lanczos)
 	if computed.Blur > 0 {
 		image = imaging.Blur(image, computed.Blur)
 	}
-	ctx.DrawImage(image, ceil(pos.X), ceil(pos.Y))
+
+	childCtx.DrawImage(image, 0, 0)
+	ctx.DrawImage(childCtx.Image(), ceil(pos.X), ceil(pos.Y))
 
 	return nil
 }
