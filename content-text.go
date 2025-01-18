@@ -1,7 +1,6 @@
 package facepaint
 
 import (
-	"math"
 	"strings"
 
 	"github.com/cufee/facepaint/style"
@@ -75,7 +74,14 @@ func (content *contentText) dimensions() contentDimensions {
 		height = size.TotalHeight + (computed.PaddingTop + computed.PaddingBottom)
 	}
 
-	content.dimensionsCache = &contentDimensions{width: int(math.Ceil(width)), height: int(math.Ceil(height))}
+	content.dimensionsCache = &contentDimensions{
+		width:           ceil(width),
+		height:          ceil(height),
+		paddingAndGapsX: computed.PaddingLeft + computed.PaddingRight,
+		paddingX:        computed.PaddingLeft + computed.PaddingRight,
+		paddingAndGapsY: computed.PaddingTop + computed.PaddingBottom,
+		paddingY:        computed.PaddingTop + computed.PaddingBottom,
+	}
 	return *content.dimensionsCache
 }
 

@@ -36,22 +36,29 @@ func (content *contentBlocks) dimensions() contentDimensions {
 		width:           ceil(computed.Width),
 		height:          ceil(computed.Height),
 		paddingAndGapsX: computed.PaddingLeft + computed.PaddingRight,
+		paddingX:        computed.PaddingLeft + computed.PaddingRight,
 		paddingAndGapsY: computed.PaddingTop + computed.PaddingBottom,
+		paddingY:        computed.PaddingTop + computed.PaddingBottom,
 	}
 
-	var gapCount = 0
+	var relativeBlocks = 0.0
 	for _, block := range content.value {
-		switch block.Style().Computed().Position {
-		case style.PositionRelative:
-			gapCount++
+		if block.Style().Computed().Position == style.PositionAbsolute {
+			continue
 		}
+		relativeBlocks++
 	}
 
 	switch computed.Direction {
 	case style.DirectionHorizontal:
-		dimensions.paddingAndGapsX += max(0, computed.Gap*float64(gapCount-1))
+		gaps := max(0, computed.Gap*(relativeBlocks-1))
+		dimensions.paddingAndGapsX += gaps
+		dimensions.gapsX += gaps
+
 	case style.DirectionVertical:
-		dimensions.paddingAndGapsY += max(0, computed.Gap*float64(gapCount-1))
+		gaps := max(0, computed.Gap*(relativeBlocks-1))
+		dimensions.paddingAndGapsY += gaps
+		dimensions.gapsY += gaps
 	}
 
 	if dimensions.width > 0 && dimensions.height > 0 {
@@ -180,6 +187,27 @@ func renderBlocksContent(ctx layerContext, containerStyle style.Style, container
 		return errors.New("no blocks to render")
 	}
 
+	// calculate true content dimensions
+	var relativeBlocks int
+	var contentWidthTotal, contentHeightTotal int
+	for _, block := range blocks {
+		if block.Style().Computed().Position == style.PositionAbsolute {
+			continue
+		}
+		relativeBlocks++
+
+		blockDimensions := block.Dimensions()
+		contentWidthTotal += blockDimensions.width
+		contentHeightTotal += blockDimensions.height
+	}
+	// add gaps as content width
+	switch containerStyle.Direction {
+	case style.DirectionHorizontal:
+		contentWidthTotal += ceil(container.paddingAndGapsX)
+	case style.DirectionVertical:
+		contentHeightTotal += ceil(container.paddingAndGapsY)
+	}
+
 	var lastX, lastY float64 = pos.X, pos.Y
 	for _, block := range blocks {
 		blockStyle := block.Style().Computed()
@@ -191,12 +219,12 @@ func renderBlocksContent(ctx layerContext, containerStyle style.Style, container
 			if blockStyle.Left != 0 {
 				posX += blockStyle.Left
 			} else if blockStyle.Right != 0 {
-				posX += float64(container.width-int(container.paddingAndGapsX)-blockSize.width) - blockStyle.Right
+				posX += float64(container.width-blockSize.width) - blockStyle.Right
 			}
 			if blockStyle.Top != 0 {
 				posY += blockStyle.Top
 			} else if blockStyle.Bottom != 0 {
-				posY += float64(container.height-int(container.paddingAndGapsY)-blockSize.height) - blockStyle.Bottom
+				posY += float64(container.height-blockSize.height) - blockStyle.Bottom
 			}
 		}
 
@@ -205,45 +233,49 @@ func renderBlocksContent(ctx layerContext, containerStyle style.Style, container
 			// align content vertically
 			switch containerStyle.JustifyContent {
 			case style.JustifyContentCenter:
-				posY += float64(container.height-blockSize.height) / 2
+				posY += float64(container.height-contentHeightTotal) / 2
 			case style.JustifyContentEnd:
-				posY += float64(container.height - blockSize.height)
+				posY += float64(container.height - contentHeightTotal)
 			case style.JustifyContentSpaceAround:
-				posY += float64((container.height - blockSize.height) / (len(blocks) + 1))
+				if relativeBlocks > 0 {
+					posY += float64((container.height - contentHeightTotal) / (relativeBlocks + 1))
+				}
 			case style.JustifyContentSpaceBetween:
-				if len(blocks) > 1 {
-					posY += float64((container.height - blockSize.height) / (len(blocks) - 1))
+				if relativeBlocks > 0 {
+					posY += float64((container.height - contentHeightTotal) / (relativeBlocks - 1))
 				}
 			}
 
 			// align content horizontally
 			switch containerStyle.AlignItems {
 			case style.AlignItemsCenter:
-				posX += float64(container.width-blockSize.width) / 2
+				posX += float64(container.width-ceil(container.paddingX)-blockSize.width) / 2
 			case style.AlignItemsEnd:
-				posX += float64(blockSize.width)
+				posX += float64(container.width - ceil(container.paddingX) - blockSize.width)
 			}
 		default: // DirectionHorizontal
 			// align content horizontally
 			switch containerStyle.JustifyContent {
 			case style.JustifyContentCenter:
-				posX += float64(container.width-blockSize.width) / 2
+				posX += float64(container.width-contentWidthTotal) / 2
 			case style.JustifyContentEnd:
-				posX += float64(container.width - blockSize.width)
+				posX += float64(container.width - contentWidthTotal)
 			case style.JustifyContentSpaceAround:
-				posX += float64((container.width - blockSize.width) / (len(blocks) + 1))
+				if relativeBlocks > 0 {
+					posX += float64((container.width - contentWidthTotal) / (relativeBlocks + 1))
+				}
 			case style.JustifyContentSpaceBetween:
-				if len(blocks) > 1 {
-					posX += float64((container.width - blockSize.width) / (len(blocks) - 1))
+				if relativeBlocks > 0 {
+					posX += float64((container.width - contentWidthTotal) / (relativeBlocks - 1))
 				}
 			}
 
 			// align content vertically
 			switch containerStyle.AlignItems {
 			case style.AlignItemsCenter:
-				posY += (float64(container.height-blockSize.height) / 2)
+				posY += float64(container.height-ceil(container.paddingY)-blockSize.height) / 2
 			case style.AlignItemsEnd:
-				posY += float64(blockSize.height)
+				posY += float64(container.height - ceil(container.paddingY) - blockSize.height)
 			}
 
 		}

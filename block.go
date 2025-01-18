@@ -87,8 +87,13 @@ func (b *Block) Dimensions() contentDimensions {
 }
 
 type contentDimensions struct {
-	width           int
-	height          int
+	width  int
+	height int
+
 	paddingAndGapsX float64
 	paddingAndGapsY float64
+	paddingX        float64
+	paddingY        float64
+	gapsX           float64
+	gapsY           float64
 }

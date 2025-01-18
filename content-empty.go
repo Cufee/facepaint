@@ -26,7 +26,9 @@ func (content *contentEmpty) dimensions() contentDimensions {
 		width:           int(computed.Width),
 		height:          int(computed.Height),
 		paddingAndGapsY: computed.PaddingTop + computed.PaddingBottom,
+		paddingX:        computed.PaddingTop + computed.PaddingBottom,
 		paddingAndGapsX: computed.PaddingLeft + computed.PaddingRight,
+		paddingY:        computed.PaddingLeft + computed.PaddingRight,
 	}
 }
 
