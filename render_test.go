@@ -13,17 +13,6 @@ import (
 	"github.com/matryer/is"
 )
 
-var _ = saveImage
-
-var contentSize = 12.0
-var contentColorAlphaValue uint32
-var contentColor = color.RGBA{255, 255, 255, 255}
-
-func init() {
-	_, _, _, a := contentColor.RGBA()
-	contentColorAlphaValue = a
-}
-
 func TestRenderV2(t *testing.T) {
 	if os.Getenv("CI") == "true" {
 		return // this is a local test for visual debugging
@@ -80,7 +69,23 @@ func TestRenderV2(t *testing.T) {
 	saveImage(is, img)
 }
 
+// utils used in tests
+
+var _ = saveImage
+
+var contentSize = 12.0
+var contentColorAlphaValue uint32
+var contentColor = color.RGBA{255, 255, 255, 255}
+
+func init() {
+	_, _, _, a := contentColor.RGBA()
+	contentColorAlphaValue = a
+}
+
 func saveImage(is *is.I, img image.Image) {
+	err := os.MkdirAll(filepath.Join(tests.Root(), "tmp"), os.ModePerm)
+	is.NoErr(err)
+
 	f, err := os.Create(filepath.Join(tests.Root(), "tmp", "test_render_blocks.png"))
 	is.NoErr(err)
 
