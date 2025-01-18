@@ -3,6 +3,8 @@ package style
 import (
 	"image"
 	"image/color"
+
+	"github.com/nao1215/imaging"
 )
 
 type alignItemsValue byte
@@ -34,6 +36,48 @@ const (
 	PositionAbsolute
 )
 
+type positionAnchor byte
+
+const (
+	BackgroundCenter positionAnchor = iota
+
+	BackgroundLeft
+	BackgroundRight
+
+	BackgroundTop
+	BackgroundBottom
+
+	BackgroundTopLeft
+	BackgroundTopRight
+
+	BackgroundBottomLeft
+	BackgroundBottomRight
+)
+
+func (p positionAnchor) Imaging() imaging.Anchor {
+	switch p {
+	default:
+		return imaging.Center
+
+	case BackgroundLeft:
+		return imaging.Left
+	case BackgroundRight:
+		return imaging.Right
+	case BackgroundTop:
+		return imaging.Top
+	case BackgroundBottom:
+		return imaging.Bottom
+	case BackgroundTopLeft:
+		return imaging.TopLeft
+	case BackgroundTopRight:
+		return imaging.TopRight
+	case BackgroundBottomLeft:
+		return imaging.BottomLeft
+	case BackgroundBottomRight:
+		return imaging.BottomRight
+	}
+}
+
 type overflowValue byte
 
 const (
@@ -51,9 +95,10 @@ type Style struct {
 
 	Font Font
 
-	Color           color.Color
-	BackgroundColor color.Color
-	BackgroundImage image.Image
+	Color              color.Color
+	BackgroundColor    color.Color
+	BackgroundImage    image.Image
+	BackgroundPosition positionAnchor // will also set image anchor position when using image block type
 
 	Overflow overflowValue
 
