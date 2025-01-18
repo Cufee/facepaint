@@ -2,6 +2,7 @@ package facepaint
 
 import (
 	"image"
+	"math"
 
 	"github.com/cufee/facepaint/style"
 	"github.com/nao1215/imaging"
@@ -33,18 +34,28 @@ func (content *contentImage) dimensions() contentDimensions {
 	computed := content.Style().Computed()
 	dimensions := contentDimensions{
 		width:           ceil(computed.Width),
-		height:          ceil(computed.Width),
-		paddingAndGapsY: computed.PaddingTop + computed.PaddingBottom,
-		paddingX:        computed.PaddingTop + computed.PaddingBottom,
+		height:          ceil(computed.Height),
 		paddingAndGapsX: computed.PaddingLeft + computed.PaddingRight,
-		paddingY:        computed.PaddingLeft + computed.PaddingRight,
+		paddingX:        computed.PaddingLeft + computed.PaddingRight,
+		paddingAndGapsY: computed.PaddingTop + computed.PaddingBottom,
+		paddingY:        computed.PaddingTop + computed.PaddingBottom,
 	}
-	if dimensions.width == 0 {
+
+	if dimensions.width == 0 && dimensions.height == 0 {
 		dimensions.width = content.image.Bounds().Dx() + ceil(dimensions.paddingX)
-	}
-	if dimensions.height == 0 {
 		dimensions.height = content.image.Bounds().Dy() + ceil(dimensions.paddingY)
 	}
+
+	// if new width or height is 0 then preserve aspect ratio, minimum 1px.
+	if dimensions.width == 0 {
+		tmpW := float64(dimensions.height) * float64(content.image.Bounds().Dx()) / float64(content.image.Bounds().Dy())
+		dimensions.width = int(max(1.0, math.Floor(tmpW+0.5)))
+	}
+	if dimensions.height == 0 {
+		tmpH := float64(dimensions.width) * float64(content.image.Bounds().Dy()) / float64(content.image.Bounds().Dx())
+		dimensions.height = int(math.Max(1.0, math.Floor(tmpH+0.5)))
+	}
+
 	return dimensions
 }
 
@@ -81,7 +92,7 @@ func (content *contentImage) Render(layers layerContext, pos Position) error {
 		ctx.Stroke()
 	}
 
-	image := imaging.Fill(content.image, dimensions.width, dimensions.height, computed.BackgroundPosition.Imaging(), imaging.Lanczos)
+	image := imaging.Resize(content.image, dimensions.width, dimensions.height, imaging.Lanczos)
 	ctx.DrawImage(image, ceil(pos.X), ceil(pos.Y))
 
 	return nil
