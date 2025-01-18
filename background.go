@@ -6,7 +6,7 @@ import (
 )
 
 func drawBackgroundPath(ctx *gg.Context, style style.Style, dimensions contentDimensions, pos Position) {
-	width, height := float64(dimensions.width), float64(dimensions.height)
+	width, height := float64(dimensions.Width), float64(dimensions.Height)
 
 	// Offset the position
 	offsetX, offsetY := pos.X, pos.Y

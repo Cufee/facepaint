@@ -20,8 +20,8 @@ func TestApplyPadding(t *testing.T) {
 		), content)
 
 		d := wrapper.Dimensions()
-		is.True(d.width == ceil(contentSize)+20)
-		is.True(d.height == ceil(contentSize)+20)
+		is.True(d.Width == ceil(contentSize)+20)
+		is.True(d.Height == ceil(contentSize)+20)
 
 		img, err := wrapper.Render()
 		is.NoErr(err)
@@ -42,8 +42,8 @@ func TestApplyPadding(t *testing.T) {
 		), content)
 
 		d := wrapper.Dimensions()
-		is.True(d.width == ceil(contentSize)+20)
-		is.True(d.height == ceil(contentSize))
+		is.True(d.Width == ceil(contentSize)+20)
+		is.True(d.Height == ceil(contentSize))
 	})
 
 	t.Run("Y", func(t *testing.T) {
@@ -52,8 +52,8 @@ func TestApplyPadding(t *testing.T) {
 		), content)
 
 		d := wrapper.Dimensions()
-		is.True(d.width == ceil(contentSize))
-		is.True(d.height == ceil(contentSize)+20)
+		is.True(d.Width == ceil(contentSize))
+		is.True(d.Height == ceil(contentSize)+20)
 	})
 
 	t.Run("overwrite", func(t *testing.T) {
@@ -63,8 +63,8 @@ func TestApplyPadding(t *testing.T) {
 		), content)
 
 		d := wrapper.Dimensions()
-		is.True(d.width == ceil(contentSize))
-		is.True(d.height == ceil(contentSize))
+		is.True(d.Width == ceil(contentSize))
+		is.True(d.Height == ceil(contentSize))
 	})
 
 	t.Run("left", func(t *testing.T) {
@@ -75,8 +75,8 @@ func TestApplyPadding(t *testing.T) {
 		), content)
 
 		d := wrapper.Dimensions()
-		is.True(d.width == ceil(contentSize)+10)
-		is.True(d.height == ceil(contentSize))
+		is.True(d.Width == ceil(contentSize)+10)
+		is.True(d.Height == ceil(contentSize))
 
 		img, err := wrapper.Render()
 		is.NoErr(err)
@@ -99,8 +99,8 @@ func TestApplyPadding(t *testing.T) {
 		), content)
 
 		d := wrapper.Dimensions()
-		is.True(d.width == ceil(contentSize))
-		is.True(d.height == ceil(contentSize)+10)
+		is.True(d.Width == ceil(contentSize))
+		is.True(d.Height == ceil(contentSize)+10)
 
 		img, err := wrapper.Render()
 		is.NoErr(err)

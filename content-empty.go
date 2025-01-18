@@ -23,8 +23,8 @@ func (content *contentEmpty) setStyle(style style.StyleOptions) {
 func (content *contentEmpty) dimensions() contentDimensions {
 	computed := content.Style().Computed()
 	return contentDimensions{
-		width:           int(computed.Width),
-		height:          int(computed.Height),
+		Width:           int(computed.Width),
+		Height:          int(computed.Height),
 		paddingAndGapsY: computed.PaddingTop + computed.PaddingBottom,
 		paddingX:        computed.PaddingTop + computed.PaddingBottom,
 		paddingAndGapsX: computed.PaddingLeft + computed.PaddingRight,
@@ -59,7 +59,7 @@ func (content *contentEmpty) Render(layers layerContext, pos Position) error {
 	}
 	if computed.Debug {
 		ctx.SetColor(getDebugColor())
-		ctx.DrawRectangle(pos.X, pos.Y, float64(dimensions.width), float64(dimensions.height))
+		ctx.DrawRectangle(pos.X, pos.Y, float64(dimensions.Width), float64(dimensions.Height))
 		ctx.Stroke()
 	}
 	return nil

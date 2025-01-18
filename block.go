@@ -72,7 +72,7 @@ func (b *Block) Render() (image.Image, error) {
 	layers := b.Layers()
 	ctx := make(layerContext, len(layers))
 	for idx := range layers {
-		ctx[idx] = gg.NewContext(dimensions.width, dimensions.height)
+		ctx[idx] = gg.NewContext(dimensions.Width, dimensions.Height)
 	}
 
 	err := b.content.Render(ctx, Position{0, 0})
@@ -87,8 +87,8 @@ func (b *Block) Dimensions() contentDimensions {
 }
 
 type contentDimensions struct {
-	width  int
-	height int
+	Width  int
+	Height int
 
 	paddingAndGapsX float64
 	paddingAndGapsY float64

@@ -48,6 +48,10 @@ func SetHeight(value float64) styleOption {
 	return func(s *Style) { s.Height = value }
 }
 
+func SetZIndex(value int) styleOption {
+	return func(s *Style) { s.ZIndex = value }
+}
+
 func SetPadding(value float64) styleOption {
 	return func(s *Style) {
 		s.PaddingLeft = value
@@ -94,7 +98,9 @@ func SetBlur(value float64) styleOption {
 
 func SetBackground(value image.Image) styleOption {
 	return func(s *Style) {
-		s.BackgroundImage = value
+		if value != nil {
+			s.BackgroundImage = value
+		}
 	}
 }
 

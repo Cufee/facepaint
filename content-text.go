@@ -75,8 +75,8 @@ func (content *contentText) dimensions() contentDimensions {
 	}
 
 	content.dimensionsCache = &contentDimensions{
-		width:           ceil(width),
-		height:          ceil(height),
+		Width:           ceil(width),
+		Height:          ceil(height),
 		paddingAndGapsX: computed.PaddingLeft + computed.PaddingRight,
 		paddingX:        computed.PaddingLeft + computed.PaddingRight,
 		paddingAndGapsY: computed.PaddingTop + computed.PaddingBottom,
@@ -118,7 +118,7 @@ func (content *contentText) Render(layers layerContext, pos Position) error {
 		// replace the context
 		parentPosition := pos
 		pos = Position{X: 0, Y: 0}
-		ctx = gg.NewContext(dimensions.width, dimensions.height)
+		ctx = gg.NewContext(dimensions.Width, dimensions.Height)
 		defer func() {
 			// blur the result and paste onto the parent layer
 			parent, _ := layers.layer(computed.ZIndex)
@@ -133,13 +133,13 @@ func (content *contentText) Render(layers layerContext, pos Position) error {
 		ctx.Fill()
 	}
 	if computed.BackgroundImage != nil {
-		background := imaging.Fill(computed.BackgroundImage, dimensions.width, dimensions.height, imaging.Center, imaging.Lanczos)
+		background := imaging.Fill(computed.BackgroundImage, dimensions.Width, dimensions.Height, imaging.Center, imaging.Lanczos)
 		ctx.DrawImage(background, ceil(pos.X), ceil(pos.Y))
 	}
 
 	if computed.Debug {
 		ctx.SetColor(getDebugColor())
-		ctx.DrawRectangle(pos.X, pos.Y, float64(dimensions.width), float64(dimensions.height))
+		ctx.DrawRectangle(pos.X, pos.Y, float64(dimensions.Width), float64(dimensions.Height))
 		ctx.Stroke()
 	}
 
@@ -147,15 +147,15 @@ func (content *contentText) Render(layers layerContext, pos Position) error {
 
 	switch computed.JustifyContent {
 	case style.JustifyContentEnd:
-		lastX += float64(dimensions.width) - size.TotalWidth
+		lastX += float64(dimensions.Width) - size.TotalWidth
 	case style.JustifyContentCenter:
-		lastX += (float64(dimensions.width) - size.TotalWidth) / 2
+		lastX += (float64(dimensions.Width) - size.TotalWidth) / 2
 	}
 	switch computed.AlignItems {
 	case style.AlignItemsEnd:
-		lastY += float64(dimensions.width) - size.TotalHeight
+		lastY += float64(dimensions.Width) - size.TotalHeight
 	case style.AlignItemsCenter:
-		lastY += (float64(dimensions.width) - size.TotalHeight) / 2
+		lastY += (float64(dimensions.Width) - size.TotalHeight) / 2
 	}
 
 	// Render text
