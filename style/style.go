@@ -85,6 +85,6 @@ type Style struct {
 	ZIndex int
 }
 
-func (s Style) Options() StyleOptions {
-	return StyleOptions{Parent(s)}
+func (s *Style) Options() StyleOptions {
+	return StyleOptions{Parent(*s)}
 }
