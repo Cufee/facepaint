@@ -1,4 +1,4 @@
-package render
+package facepaint
 
 import "math"
 

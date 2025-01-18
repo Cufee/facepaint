@@ -1,4 +1,4 @@
-package render
+package facepaint
 
 import (
 	"github.com/cufee/facepaint/style"
