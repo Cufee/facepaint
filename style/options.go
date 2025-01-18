@@ -1,6 +1,9 @@
 package style
 
-import "image/color"
+import (
+	"image"
+	"image/color"
+)
 
 func NewStyle(opts ...styleOption) StyleOptions {
 	return opts
@@ -86,6 +89,12 @@ func SetGrowY(value bool) styleOption {
 func SetBlur(value float64) styleOption {
 	return func(s *Style) {
 		s.Blur = value
+	}
+}
+
+func SetBackground(value image.Image) styleOption {
+	return func(s *Style) {
+		s.BackgroundImage = value
 	}
 }
 

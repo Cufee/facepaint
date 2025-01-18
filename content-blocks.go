@@ -162,7 +162,7 @@ func (content *contentBlocks) Render(layers layerContext, pos Position) error {
 
 	if computed.BackgroundColor != nil {
 		ctx.SetColor(computed.BackgroundColor)
-		ctx.DrawRectangle(pos.X, pos.Y, float64(dimensions.width), float64(dimensions.height))
+		drawBackgroundPath(ctx, computed, dimensions, pos)
 		ctx.Fill()
 	}
 	if computed.BackgroundImage != nil {

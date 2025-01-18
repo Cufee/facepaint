@@ -52,13 +52,11 @@ func (content *contentEmpty) Render(layers layerContext, pos Position) error {
 		return err
 	}
 
-	var originX, originY float64 = pos.X + computed.PaddingLeft, pos.Y + computed.PaddingTop
 	if computed.BackgroundColor != nil {
 		ctx.SetColor(computed.BackgroundColor)
-		ctx.DrawRectangle(originX, originY, float64(dimensions.width), float64(dimensions.height))
+		drawBackgroundPath(ctx, computed, dimensions, pos)
 		ctx.Fill()
 	}
-
 	if computed.Debug {
 		ctx.SetColor(getDebugColor())
 		ctx.DrawRectangle(pos.X, pos.Y, float64(dimensions.width), float64(dimensions.height))
