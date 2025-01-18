@@ -20,6 +20,10 @@ func NewImageContent(style style.StyleOptions, image image.Image) (*Block, error
 		image: image,
 	}), nil
 }
+func MustNewImageContent(style style.StyleOptions, image image.Image) *Block {
+	b, _ := NewImageContent(style, image)
+	return b
+}
 
 type contentImage struct {
 	style style.StyleOptions
@@ -91,6 +95,9 @@ func (content *contentImage) Render(layers layerContext, pos Position) error {
 	}
 
 	image := imaging.Resize(content.image, dimensions.Width, dimensions.Height, imaging.Lanczos)
+	if computed.Blur > 0 {
+		image = imaging.Blur(image, computed.Blur)
+	}
 	ctx.DrawImage(image, ceil(pos.X), ceil(pos.Y))
 
 	return nil
