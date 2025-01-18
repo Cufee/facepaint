@@ -1,6 +1,6 @@
 module github.com/cufee/facepaint
 
-go 1.23.4
+go 1.23.5
 
 require (
 	github.com/fogleman/gg v1.3.0
@@ -11,4 +11,4 @@ require (
 	golang.org/x/image v0.23.0
 )
 
-require golang.org/x/sync v0.8.0 // indirect
+require golang.org/x/sync v0.10.0 // indirect
