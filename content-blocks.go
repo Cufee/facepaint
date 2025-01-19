@@ -209,7 +209,7 @@ func renderBlocksContent(ctx layerContext, containerStyle style.Style, container
 	}
 
 	var lastX, lastY float64 = pos.X, pos.Y
-	for _, block := range blocks {
+	for i, block := range blocks {
 		blockStyle := block.Style().Computed()
 		blockSize := block.Dimensions()
 		posX, posY := lastX, lastY
@@ -237,11 +237,14 @@ func renderBlocksContent(ctx layerContext, containerStyle style.Style, container
 			case style.JustifyContentEnd:
 				posY += float64(container.Height - contentHeightTotal)
 			case style.JustifyContentSpaceAround:
-				if relativeBlocks > 0 {
+				if relativeBlocks == 1 {
+					posY += float64(container.Height-contentHeightTotal) / 2
+				}
+				if relativeBlocks > 1 {
 					posY += float64((container.Height - contentHeightTotal) / (relativeBlocks + 1))
 				}
 			case style.JustifyContentSpaceBetween:
-				if relativeBlocks > 0 {
+				if i > 0 && relativeBlocks > 1 {
 					posY += float64((container.Height - contentHeightTotal) / (relativeBlocks - 1))
 				}
 			}
@@ -261,11 +264,14 @@ func renderBlocksContent(ctx layerContext, containerStyle style.Style, container
 			case style.JustifyContentEnd:
 				posX += float64(container.Width - contentWidthTotal)
 			case style.JustifyContentSpaceAround:
-				if relativeBlocks > 0 {
+				if relativeBlocks == 1 {
+					posX += float64(container.Width-contentWidthTotal) / 2
+				}
+				if relativeBlocks > 1 {
 					posX += float64((container.Width - contentWidthTotal) / (relativeBlocks + 1))
 				}
 			case style.JustifyContentSpaceBetween:
-				if relativeBlocks > 0 {
+				if i > 0 && relativeBlocks > 1 {
 					posX += float64((container.Width - contentWidthTotal) / (relativeBlocks - 1))
 				}
 			}
