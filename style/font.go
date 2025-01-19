@@ -32,10 +32,13 @@ func (f *fontType) Face() (font.Face, func() error) {
 	return f.face, func() error { f.mx.Unlock(); return nil }
 }
 
-func NewFont(data []byte, size float64) Font {
-	ttf, _ := truetype.Parse(data)
+func NewFont(data []byte, size float64) (Font, error) {
+	ttf, err := truetype.Parse(data)
+	if err != nil {
+		return nil, err
+	}
 	face := truetype.NewFace(ttf, &truetype.Options{
 		Size: size,
 	})
-	return &fontType{size, face, &sync.Mutex{}}
+	return &fontType{size, face, &sync.Mutex{}}, nil
 }
