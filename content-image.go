@@ -100,7 +100,7 @@ func (content *contentImage) Render(layers layerContext, pos Position) error {
 		childCtx.Stroke()
 	}
 
-	image := imaging.Resize(content.image, dimensions.Width, dimensions.Height, imaging.Lanczos)
+	image := imaging.Fill(content.image, dimensions.Width, dimensions.Height, computed.BackgroundPosition.Imaging(), imaging.Lanczos)
 	if computed.Blur > 0 {
 		image = imaging.Blur(image, computed.Blur)
 	}
