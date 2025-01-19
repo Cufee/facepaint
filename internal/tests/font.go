@@ -10,5 +10,6 @@ import (
 var fontData []byte
 
 func Font() style.Font {
-	return style.NewFont(fontData, 24)
+	f, _ := style.NewFont(fontData, 24)
+	return f
 }
