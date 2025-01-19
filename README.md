@@ -6,6 +6,6 @@ The main goal was to simplify creating UIs programmatically and render them into
 
 ## Render Examples
 The first example took `34ms` to render on a x64 CPU  
-![Example 1](https://github.com/cufee/facepaint/blob/main/docs/images/example_1.png?raw=true)  
+![Example 1](https://github.com/cufee/facepaint/blob/main/docs/images/example_2.png?raw=true)  
 The second example took `70ms` to render on a x64 CPU  
-![Example 2](https://github.com/cufee/facepaint/blob/main/docs/images/example_2.png?raw=true)  
+![Example 2](https://github.com/cufee/facepaint/blob/main/docs/images/example_1.png?raw=true)  
