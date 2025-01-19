@@ -5,7 +5,6 @@ import (
 	"math"
 
 	"github.com/cufee/facepaint/style"
-	"github.com/fogleman/gg"
 	"github.com/nao1215/imaging"
 	"github.com/pkg/errors"
 )
@@ -76,7 +75,7 @@ func (content *contentImage) Style() style.StyleOptions {
 	return content.style
 }
 
-func (content *contentImage) Render(layers layerContext, pos Position) error {
+func (content *contentImage) Render(layers *layerContext, pos Position) error {
 	computed := content.style.Computed()
 	dimensions := content.dimensions()
 	ctx, err := layers.layer(computed.ZIndex)
@@ -84,7 +83,7 @@ func (content *contentImage) Render(layers layerContext, pos Position) error {
 		return err
 	}
 
-	childCtx := gg.NewContext(dimensions.Width, dimensions.Height)
+	childCtx := newLayer(dimensions.Width, dimensions.Height)
 
 	// apply border radius
 	drawBackgroundPath(childCtx, computed, dimensions, Position{0, 0})

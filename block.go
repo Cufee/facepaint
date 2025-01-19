@@ -5,7 +5,6 @@ import (
 	"image"
 
 	"github.com/cufee/facepaint/style"
-	"github.com/fogleman/gg"
 )
 
 func NewBlock(content BlockContent) *Block {
@@ -39,7 +38,7 @@ type BlockContent interface {
 	Type() blockContentType
 
 	// Renders the block onto an image
-	Render(layerContext, Position) error
+	Render(*layerContext, Position) error
 
 	Style() style.StyleOptions
 	setStyle(style.StyleOptions)
@@ -70,9 +69,9 @@ func (b *Block) Render() (image.Image, error) {
 	dimensions := b.Dimensions()
 
 	layers := b.Layers()
-	ctx := make(layerContext, len(layers))
+	ctx := newLayerContext(len(layers))
 	for idx := range layers {
-		ctx[idx] = gg.NewContext(dimensions.Width, dimensions.Height)
+		ctx.layers[idx] = newLayer(dimensions.Width, dimensions.Height)
 	}
 
 	err := b.content.Render(ctx, Position{0, 0})

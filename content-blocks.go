@@ -2,9 +2,9 @@ package facepaint
 
 import (
 	"errors"
+	"image"
 
 	"github.com/cufee/facepaint/style"
-	"github.com/fogleman/gg"
 	"github.com/nao1215/imaging"
 )
 
@@ -126,7 +126,7 @@ func (content *contentBlocks) Style() style.StyleOptions {
 	return content.style
 }
 
-func (content *contentBlocks) Render(layers layerContext, pos Position) error {
+func (content *contentBlocks) Render(layers *layerContext, pos Position) error {
 	computed := content.style.Computed()
 	dimensions := content.dimensions()
 	ctx, err := layers.layer(computed.ZIndex)
@@ -151,13 +151,24 @@ func (content *contentBlocks) Render(layers layerContext, pos Position) error {
 		// replace the context
 		parentPosition := pos
 		pos = Position{X: 0, Y: 0}
-		ctx = gg.NewContext(dimensions.Width, dimensions.Height)
+		ctx = newLayer(dimensions.Width, dimensions.Height)
 		defer func() {
 			// blur the result and paste onto the parent layer
 			parent, _ := layers.layer(computed.ZIndex)
 			img := imaging.Blur(ctx.Image(), computed.Blur)
 			parent.DrawImage(img, ceil(parentPosition.X), ceil(parentPosition.Y))
 		}()
+	}
+	if computed.BlurBackground > 0 {
+		layers.registerHook(computed.ZIndex, layerHookBeforeRender(func(frame, layer *layer) {
+			backdrop := imaging.Crop(frame.Image(), image.Rect(ceil(pos.X), ceil(pos.Y), ceil(pos.X)+dimensions.Width, ceil(pos.Y)+dimensions.Height))
+			backdrop = imaging.Blur(backdrop, computed.BlurBackground)
+
+			drawBackgroundPath(frame, computed, dimensions, pos)
+			frame.Clip()
+			frame.DrawImage(backdrop, ceil(pos.X), ceil(pos.Y))
+			frame.ResetClip()
+		}))
 	}
 
 	if computed.BackgroundColor != nil {
@@ -182,7 +193,7 @@ func (content *contentBlocks) Render(layers layerContext, pos Position) error {
 	return renderBlocksContent(layers, computed, dimensions, Position{X: originX, Y: originY}, content.value...)
 }
 
-func renderBlocksContent(ctx layerContext, containerStyle style.Style, container contentDimensions, pos Position, blocks ...*Block) error {
+func renderBlocksContent(ctx *layerContext, containerStyle style.Style, container contentDimensions, pos Position, blocks ...*Block) error {
 	if len(blocks) < 1 {
 		return errors.New("no blocks to render")
 	}

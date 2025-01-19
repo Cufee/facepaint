@@ -91,7 +91,8 @@ type Style struct {
 	Width  float64
 	Height float64
 
-	Blur float64
+	Blur           float64
+	BlurBackground float64
 
 	Font Font
 

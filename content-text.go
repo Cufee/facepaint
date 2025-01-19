@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/cufee/facepaint/style"
-	"github.com/fogleman/gg"
 	"github.com/nao1215/imaging"
 	"github.com/pkg/errors"
 )
@@ -97,7 +96,7 @@ func (content *contentText) Style() style.StyleOptions {
 	return content.style
 }
 
-func (content *contentText) Render(layers layerContext, pos Position) error {
+func (content *contentText) Render(layers *layerContext, pos Position) error {
 	computed := content.style.Computed()
 	dimensions := content.dimensions()
 
@@ -118,7 +117,7 @@ func (content *contentText) Render(layers layerContext, pos Position) error {
 		// replace the context
 		parentPosition := pos
 		pos = Position{X: 0, Y: 0}
-		ctx = gg.NewContext(dimensions.Width, dimensions.Height)
+		ctx = newLayer(dimensions.Width, dimensions.Height)
 		defer func() {
 			// blur the result and paste onto the parent layer
 			parent, _ := layers.layer(computed.ZIndex)

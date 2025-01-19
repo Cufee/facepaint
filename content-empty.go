@@ -44,7 +44,7 @@ func (content *contentEmpty) Style() style.StyleOptions {
 	return content.style
 }
 
-func (content *contentEmpty) Render(layers layerContext, pos Position) error {
+func (content *contentEmpty) Render(layers *layerContext, pos Position) error {
 	computed := content.style.Computed()
 	dimensions := content.dimensions()
 	ctx, err := layers.layer(computed.ZIndex)

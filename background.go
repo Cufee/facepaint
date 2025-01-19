@@ -5,7 +5,7 @@ import (
 	"github.com/fogleman/gg"
 )
 
-func drawBackgroundPath(ctx *gg.Context, style style.Style, dimensions contentDimensions, pos Position) {
+func drawBackgroundPath(ctx *layer, style style.Style, dimensions contentDimensions, pos Position) {
 	width, height := float64(dimensions.Width), float64(dimensions.Height)
 
 	// Offset the position
