@@ -105,6 +105,8 @@ func (content *contentBlocks) dimensions() contentDimensions {
 		}
 	}
 
+	dimensions.Width = max(dimensions.Width, ceil(computed.MinWidth))
+	dimensions.Height = max(dimensions.Height, ceil(computed.MinHeight))
 	return dimensions
 }
 
@@ -230,12 +232,12 @@ func renderBlocksContent(ctx *layerContext, containerStyle style.Style, containe
 			if blockStyle.Left != 0 {
 				posX += blockStyle.Left
 			} else if blockStyle.Right != 0 {
-				posX += float64(container.Width-blockSize.Width) - blockStyle.Right
+				posX += float64(container.Width) - blockStyle.Right
 			}
 			if blockStyle.Top != 0 {
 				posY += blockStyle.Top
 			} else if blockStyle.Bottom != 0 {
-				posY += float64(container.Height-blockSize.Height) - blockStyle.Bottom
+				posY += float64(container.Height) - blockStyle.Bottom
 			}
 		}
 
@@ -342,14 +344,18 @@ func applyBlocksGrowth(containerStyle style.Style, container contentDimensions, 
 		}
 	}
 
+	if growBlocksX == 0 && growBlocksY == 0 {
+		return
+	}
+
 	blockGrowX := max(0, container.Width-ceil(container.paddingAndGapsX)-blockWidthTotal) / max(1, growBlocksX)
 	blockGrowY := max(0, container.Height-ceil(container.paddingAndGapsY)-blockHeightTotal) / max(1, growBlocksY)
 
 	// apply growth to blocks
 	for _, block := range blocks {
 		blockStyle := block.Style()
-		blockComputed := blockStyle.Computed()
 		blockSize := block.Dimensions()
+		blockComputed := blockStyle.Computed()
 
 		if !blockComputed.GrowHorizontal && !blockComputed.GrowVertical {
 			continue

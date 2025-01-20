@@ -23,8 +23,8 @@ func (content *contentEmpty) setStyle(style style.StyleOptions) {
 func (content *contentEmpty) dimensions() contentDimensions {
 	computed := content.Style().Computed()
 	return contentDimensions{
-		Width:           int(computed.Width),
-		Height:          int(computed.Height),
+		Width:           ceil(max(computed.Width, computed.MinWidth)),
+		Height:          ceil(max(computed.Height, computed.MinHeight)),
 		paddingAndGapsY: computed.PaddingTop + computed.PaddingBottom,
 		paddingX:        computed.PaddingTop + computed.PaddingBottom,
 		paddingAndGapsX: computed.PaddingLeft + computed.PaddingRight,

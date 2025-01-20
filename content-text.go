@@ -61,21 +61,17 @@ func (content *contentText) dimensions() contentDimensions {
 	computed := content.style.Computed()
 	size := content.measure(computed.Font)
 
-	var width, height = 0.0, 0.0
-	if computed.Width > 0 {
-		width = computed.Width
-	} else {
+	var width, height = computed.Width, computed.Height
+	if width == 0 {
 		width = size.TotalWidth + (computed.PaddingLeft + computed.PaddingRight)
 	}
-	if computed.Height > 0 {
-		height = computed.Height
-	} else {
+	if height == 0 {
 		height = size.TotalHeight + (computed.PaddingTop + computed.PaddingBottom)
 	}
 
 	content.dimensionsCache = &contentDimensions{
-		Width:           ceil(width),
-		Height:          ceil(height),
+		Width:           ceil(max(width, computed.MinWidth)),
+		Height:          ceil(max(height, computed.MinHeight)),
 		paddingAndGapsX: computed.PaddingLeft + computed.PaddingRight,
 		paddingX:        computed.PaddingLeft + computed.PaddingRight,
 		paddingAndGapsY: computed.PaddingTop + computed.PaddingBottom,
@@ -148,13 +144,13 @@ func (content *contentText) Render(layers *layerContext, pos Position) error {
 	case style.JustifyContentEnd:
 		lastX += float64(dimensions.Width) - size.TotalWidth
 	case style.JustifyContentCenter:
-		lastX += (float64(dimensions.Width) - size.TotalWidth) / 2
+		lastX += (float64(dimensions.Width) - dimensions.paddingAndGapsX - size.TotalWidth) / 2
 	}
 	switch computed.AlignItems {
 	case style.AlignItemsEnd:
-		lastY += float64(dimensions.Width) - size.TotalHeight
+		lastY += float64(dimensions.Height) - size.TotalHeight
 	case style.AlignItemsCenter:
-		lastY += (float64(dimensions.Width) - size.TotalHeight) / 2
+		lastY += (float64(dimensions.Height) - dimensions.paddingAndGapsY - size.TotalHeight) / 2
 	}
 
 	// Render text

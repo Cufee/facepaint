@@ -48,6 +48,13 @@ func SetHeight(value float64) styleOption {
 	return func(s *Style) { s.Height = value }
 }
 
+func SetMinWidth(value float64) styleOption {
+	return func(s *Style) { s.MinWidth = value }
+}
+func SetMinHeight(value float64) styleOption {
+	return func(s *Style) { s.MinHeight = value }
+}
+
 func SetZIndex(value int) styleOption {
 	return func(s *Style) { s.ZIndex = value }
 }

@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/cufee/facepaint/style"
+	"github.com/fogleman/gg"
 	"github.com/nao1215/imaging"
 	"github.com/pkg/errors"
 )
@@ -37,8 +38,8 @@ func (content *contentImage) setStyle(style style.StyleOptions) {
 func (content *contentImage) dimensions() contentDimensions {
 	computed := content.Style().Computed()
 	dimensions := contentDimensions{
-		Width:           ceil(computed.Width),
-		Height:          ceil(computed.Height),
+		Width:           ceil(max(computed.Width, computed.MinWidth)),
+		Height:          ceil(max(computed.Height, computed.MinHeight)),
 		paddingAndGapsX: computed.PaddingLeft + computed.PaddingRight,
 		paddingX:        computed.PaddingLeft + computed.PaddingRight,
 		paddingAndGapsY: computed.PaddingTop + computed.PaddingBottom,
@@ -60,6 +61,8 @@ func (content *contentImage) dimensions() contentDimensions {
 		dimensions.Height = int(math.Max(1.0, math.Floor(tmpH+0.5)))
 	}
 
+	dimensions.Width = max(dimensions.Width, ceil(computed.MinWidth))
+	dimensions.Height = max(dimensions.Height, ceil(computed.MinHeight))
 	return dimensions
 }
 
@@ -102,6 +105,17 @@ func (content *contentImage) Render(layers *layerContext, pos Position) error {
 	image := imaging.Fill(content.image, dimensions.Width, dimensions.Height, computed.BackgroundPosition.Imaging(), imaging.Lanczos)
 	if computed.Blur > 0 {
 		image = imaging.Blur(image, computed.Blur)
+	}
+
+	if computed.Color != nil {
+		mask := gg.NewContextForImage(image)
+		childCtx.SetMask(mask.AsMask())
+		childCtx.SetColor(computed.Color)
+		drawBackgroundPath(childCtx, computed, dimensions, Position{0, 0})
+		childCtx.Fill()
+
+		ctx.DrawImage(childCtx.Image(), ceil(pos.X), ceil(pos.Y))
+		return nil
 	}
 
 	childCtx.DrawImage(image, 0, 0)
