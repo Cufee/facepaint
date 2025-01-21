@@ -365,29 +365,29 @@ func applyBlocksGrowth(containerStyle style.Style, container contentDimensions, 
 		case style.DirectionHorizontal:
 			// update the block width
 			if blockComputed.GrowHorizontal && blockComputed.Position == style.PositionAbsolute {
-				blockStyle.Add(style.SetWidth(float64(container.Width) - containerStyle.PaddingLeft - containerStyle.PaddingRight))
+				blockStyle.Merge(style.SetWidth(float64(container.Width) - containerStyle.PaddingLeft - containerStyle.PaddingRight))
 				block.content.setStyle(blockStyle)
 			} else if blockComputed.GrowHorizontal {
-				blockStyle.Add(style.SetWidth(float64(blockSize.Width) + float64(blockGrowX)))
+				blockStyle.Merge(style.SetWidth(float64(blockSize.Width) + float64(blockGrowX)))
 				block.content.setStyle(blockStyle)
 			}
 			// update the block height
 			if blockComputed.GrowVertical {
-				blockStyle.Add(style.SetHeight(float64(blockHeightMax)))
+				blockStyle.Merge(style.SetHeight(float64(blockHeightMax)))
 				block.content.setStyle(blockStyle)
 			}
 		case style.DirectionVertical:
 			// update the block width
 			if blockComputed.GrowHorizontal {
-				blockStyle.Add(style.SetWidth(float64(blockWidthMax)))
+				blockStyle.Merge(style.SetWidth(float64(blockWidthMax)))
 				block.content.setStyle(blockStyle)
 			}
 			// update the block height
 			if blockComputed.GrowVertical && blockComputed.Position == style.PositionAbsolute {
-				blockStyle.Add(style.SetWidth(float64(container.Height) - containerStyle.PaddingTop - containerStyle.PaddingBottom))
+				blockStyle.Merge(style.SetWidth(float64(container.Height) - containerStyle.PaddingTop - containerStyle.PaddingBottom))
 				block.content.setStyle(blockStyle)
 			} else if blockComputed.GrowVertical {
-				blockStyle.Add(style.SetHeight(float64(blockSize.Height) + float64(blockGrowY)))
+				blockStyle.Merge(style.SetHeight(float64(blockSize.Height) + float64(blockGrowY)))
 				block.content.setStyle(blockStyle)
 			}
 		}

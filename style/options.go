@@ -21,8 +21,16 @@ func (o StyleOptions) Computed() Style {
 	return s
 }
 
-func (arr *StyleOptions) Add(opt styleOption) {
-	*arr = append(*arr, opt)
+func (arr *StyleOptions) Merge(opt ...styleOption) {
+	*arr = append(*arr, opt...)
+}
+
+func (arr StyleOptions) Chain(opt ...styleOption) StyleOptions {
+	return append(arr, opt...)
+}
+
+func (arr StyleOptions) Spread() []styleOption {
+	return arr
 }
 
 func Parent(parent Style) styleOption {
