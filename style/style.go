@@ -78,6 +78,13 @@ func (p positionAnchor) Imaging() imaging.Anchor {
 	}
 }
 
+type BasisValue byte
+
+const (
+	BasisNone BasisValue = iota // default: additive growth
+	BasisEven                   // equal share of available space
+)
+
 type overflowValue byte
 
 const (
@@ -125,6 +132,7 @@ type Style struct {
 
 	GrowHorizontal bool
 	GrowVertical   bool
+	Basis          BasisValue
 
 	BorderRadiusTopLeft     float64
 	BorderRadiusTopRight    float64

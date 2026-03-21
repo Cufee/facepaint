@@ -254,11 +254,11 @@ func renderBlocksContent(ctx *layerContext, containerStyle style.Style, containe
 					posY += float64(container.Height-contentHeightTotal) / 2
 				}
 				if relativeBlocks > 1 {
-					posY += float64((container.Height - contentHeightTotal) / (relativeBlocks + 1))
+					posY += float64(container.Height-contentHeightTotal) / float64(relativeBlocks+1)
 				}
 			case style.JustifyContentSpaceBetween:
 				if i > 0 && relativeBlocks > 1 {
-					posY += float64((container.Height - contentHeightTotal) / (relativeBlocks - 1))
+					posY += float64(container.Height-contentHeightTotal) / float64(relativeBlocks-1)
 				}
 			}
 
@@ -281,11 +281,11 @@ func renderBlocksContent(ctx *layerContext, containerStyle style.Style, containe
 					posX += float64(container.Width-contentWidthTotal) / 2
 				}
 				if relativeBlocks > 1 {
-					posX += float64((container.Width - contentWidthTotal) / (relativeBlocks + 1))
+					posX += float64(container.Width-contentWidthTotal) / float64(relativeBlocks+1)
 				}
 			case style.JustifyContentSpaceBetween:
 				if i > 0 && relativeBlocks > 1 {
-					posX += float64((container.Width - contentWidthTotal) / (relativeBlocks - 1))
+					posX += float64(container.Width-contentWidthTotal) / float64(relativeBlocks-1)
 				}
 			}
 
@@ -321,26 +321,33 @@ func renderBlocksContent(ctx *layerContext, containerStyle style.Style, containe
 }
 
 func applyBlocksGrowth(containerStyle style.Style, container contentDimensions, blocks ...*Block) {
-	// calculate content dimensions before growth
 	var blockWidthTotal, blockWidthMax, blockHeightTotal, blockHeightMax int
-	var growBlocksX, growBlocksY = 0, 0
-	for _, block := range blocks {
-		blockDimensions := block.Dimensions()
+	var growBlocksX, growBlocksY int
+	var evenBlocksX, evenBlocksY int
 
+	for _, block := range blocks {
+		blockComputed := block.Style().Computed()
+		if blockComputed.Position == style.PositionAbsolute {
+			continue
+		}
+
+		blockDimensions := block.Dimensions()
 		blockWidthTotal += blockDimensions.Width
 		blockWidthMax = max(blockWidthMax, blockDimensions.Width)
-
 		blockHeightTotal += blockDimensions.Height
 		blockHeightMax = max(blockHeightMax, blockDimensions.Height)
 
-		blockStyle := block.Style().Computed()
-		switch {
-		case blockStyle.Position == style.PositionAbsolute:
-			// absolute blocks do not "consume" grow space
-		case blockStyle.GrowHorizontal:
+		if blockComputed.GrowHorizontal {
 			growBlocksX++
-		case blockStyle.GrowVertical:
+			if blockComputed.Basis == style.BasisEven {
+				evenBlocksX++
+			}
+		}
+		if blockComputed.GrowVertical {
 			growBlocksY++
+			if blockComputed.Basis == style.BasisEven {
+				evenBlocksY++
+			}
 		}
 	}
 
@@ -348,47 +355,136 @@ func applyBlocksGrowth(containerStyle style.Style, container contentDimensions, 
 		return
 	}
 
-	blockGrowX := max(0, container.Width-ceil(container.paddingAndGapsX)-blockWidthTotal) / max(1, growBlocksX)
-	blockGrowY := max(0, container.Height-ceil(container.paddingAndGapsY)-blockHeightTotal) / max(1, growBlocksY)
+	// apply BasisEven growth first -- even blocks split available space equally
+	applyEvenGrowth(containerStyle, container, blocks, evenBlocksX, evenBlocksY)
 
-	// apply growth to blocks
+	// recalculate totals after even growth since block sizes changed
+	if evenBlocksX > 0 || evenBlocksY > 0 {
+		blockWidthTotal, blockWidthMax, blockHeightTotal, blockHeightMax = 0, 0, 0, 0
+		for _, block := range blocks {
+			if block.Style().Computed().Position == style.PositionAbsolute {
+				continue
+			}
+			d := block.Dimensions()
+			blockWidthTotal += d.Width
+			blockWidthMax = max(blockWidthMax, d.Width)
+			blockHeightTotal += d.Height
+			blockHeightMax = max(blockHeightMax, d.Height)
+		}
+	}
+
+	// additive growth for BasisNone blocks
+	noneGrowX := growBlocksX - evenBlocksX
+	noneGrowY := growBlocksY - evenBlocksY
+	blockGrowX := max(0, container.Width-ceil(container.paddingAndGapsX)-blockWidthTotal) / max(1, noneGrowX)
+	blockGrowY := max(0, container.Height-ceil(container.paddingAndGapsY)-blockHeightTotal) / max(1, noneGrowY)
+
 	for _, block := range blocks {
 		blockStyle := block.Style()
-		blockSize := block.Dimensions()
 		blockComputed := blockStyle.Computed()
 
+		if blockComputed.Position == style.PositionAbsolute {
+			applyAbsoluteGrowth(containerStyle, container, block)
+			continue
+		}
 		if !blockComputed.GrowHorizontal && !blockComputed.GrowVertical {
 			continue
 		}
 
+		blockSize := block.Dimensions()
+
 		switch containerStyle.Direction {
 		case style.DirectionHorizontal:
-			// update the block width
-			if blockComputed.GrowHorizontal && blockComputed.Position == style.PositionAbsolute {
-				blockStyle.Merge(style.SetWidth(float64(container.Width) - containerStyle.PaddingLeft - containerStyle.PaddingRight))
-				block.content.setStyle(blockStyle)
-			} else if blockComputed.GrowHorizontal {
+			if blockComputed.GrowHorizontal && blockComputed.Basis == style.BasisNone {
 				blockStyle.Merge(style.SetWidth(float64(blockSize.Width) + float64(blockGrowX)))
 				block.content.setStyle(blockStyle)
 			}
-			// update the block height
 			if blockComputed.GrowVertical {
 				blockStyle.Merge(style.SetHeight(float64(blockHeightMax)))
 				block.content.setStyle(blockStyle)
 			}
 		case style.DirectionVertical:
-			// update the block width
 			if blockComputed.GrowHorizontal {
 				blockStyle.Merge(style.SetWidth(float64(blockWidthMax)))
 				block.content.setStyle(blockStyle)
 			}
-			// update the block height
-			if blockComputed.GrowVertical && blockComputed.Position == style.PositionAbsolute {
-				blockStyle.Merge(style.SetWidth(float64(container.Height) - containerStyle.PaddingTop - containerStyle.PaddingBottom))
-				block.content.setStyle(blockStyle)
-			} else if blockComputed.GrowVertical {
+			if blockComputed.GrowVertical && blockComputed.Basis == style.BasisNone {
 				blockStyle.Merge(style.SetHeight(float64(blockSize.Height) + float64(blockGrowY)))
 				block.content.setStyle(blockStyle)
+			}
+		}
+	}
+}
+
+func applyAbsoluteGrowth(containerStyle style.Style, container contentDimensions, block *Block) {
+	blockStyle := block.Style()
+	blockComputed := blockStyle.Computed()
+
+	switch containerStyle.Direction {
+	case style.DirectionHorizontal:
+		if blockComputed.GrowHorizontal {
+			blockStyle.Merge(style.SetWidth(float64(container.Width) - containerStyle.PaddingLeft - containerStyle.PaddingRight))
+			block.content.setStyle(blockStyle)
+		}
+	case style.DirectionVertical:
+		if blockComputed.GrowVertical {
+			blockStyle.Merge(style.SetHeight(float64(container.Height) - containerStyle.PaddingTop - containerStyle.PaddingBottom))
+			block.content.setStyle(blockStyle)
+		}
+	}
+}
+
+func applyEvenGrowth(containerStyle style.Style, container contentDimensions, blocks []*Block, evenBlocksX, evenBlocksY int) {
+	if evenBlocksX == 0 && evenBlocksY == 0 {
+		return
+	}
+
+	switch containerStyle.Direction {
+	case style.DirectionHorizontal:
+		if evenBlocksX > 0 {
+			fixedWidth := 0
+			for _, block := range blocks {
+				c := block.Style().Computed()
+				if c.Position == style.PositionAbsolute {
+					continue
+				}
+				if c.GrowHorizontal && c.Basis == style.BasisEven {
+					continue
+				}
+				fixedWidth += block.Dimensions().Width
+			}
+			evenWidth := max(0, container.Width-ceil(container.paddingAndGapsX)-fixedWidth) / evenBlocksX
+			for _, block := range blocks {
+				bs := block.Style()
+				c := bs.Computed()
+				if c.GrowHorizontal && c.Basis == style.BasisEven && c.Position != style.PositionAbsolute {
+					bs.Merge(style.SetWidth(float64(evenWidth)))
+					block.content.setStyle(bs)
+				}
+			}
+		}
+
+	case style.DirectionVertical:
+		if evenBlocksY > 0 {
+			fixedHeight := 0
+			for _, block := range blocks {
+				c := block.Style().Computed()
+				if c.Position == style.PositionAbsolute {
+					continue
+				}
+				if c.GrowVertical && c.Basis == style.BasisEven {
+					continue
+				}
+				fixedHeight += block.Dimensions().Height
+			}
+			evenHeight := max(0, container.Height-ceil(container.paddingAndGapsY)-fixedHeight) / evenBlocksY
+			for _, block := range blocks {
+				bs := block.Style()
+				c := bs.Computed()
+				if c.GrowVertical && c.Basis == style.BasisEven && c.Position != style.PositionAbsolute {
+					bs.Merge(style.SetHeight(float64(evenHeight)))
+					block.content.setStyle(bs)
+				}
 			}
 		}
 	}

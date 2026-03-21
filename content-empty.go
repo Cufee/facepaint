@@ -25,10 +25,10 @@ func (content *contentEmpty) dimensions() contentDimensions {
 	return contentDimensions{
 		Width:           ceil(max(computed.Width, computed.MinWidth)),
 		Height:          ceil(max(computed.Height, computed.MinHeight)),
-		paddingAndGapsY: computed.PaddingTop + computed.PaddingBottom,
-		paddingX:        computed.PaddingTop + computed.PaddingBottom,
 		paddingAndGapsX: computed.PaddingLeft + computed.PaddingRight,
-		paddingY:        computed.PaddingLeft + computed.PaddingRight,
+		paddingX:        computed.PaddingLeft + computed.PaddingRight,
+		paddingAndGapsY: computed.PaddingTop + computed.PaddingBottom,
+		paddingY:        computed.PaddingTop + computed.PaddingBottom,
 	}
 }
 

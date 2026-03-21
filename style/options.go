@@ -105,6 +105,12 @@ func SetGrowY(value bool) styleOption {
 	}
 }
 
+func SetBasis(value BasisValue) styleOption {
+	return func(s *Style) {
+		s.Basis = value
+	}
+}
+
 func SetBlur(value float64) styleOption {
 	return func(s *Style) {
 		s.Blur = value

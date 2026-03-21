@@ -49,3 +49,41 @@ func MeasureString(text string, font style.Font) StringSize {
 
 	return result
 }
+
+// MeasureStringWidth returns the TotalWidth of a measured string.
+func MeasureStringWidth(text string, font style.Font) float64 {
+	return MeasureString(text, font).TotalWidth
+}
+
+// MeasureStringHeight returns the TotalHeight of a measured string.
+func MeasureStringHeight(text string, font style.Font) float64 {
+	return MeasureString(text, font).TotalHeight
+}
+
+// MaxStringWidth returns the maximum TotalWidth across all provided texts measured with the given font.
+func MaxStringWidth(font style.Font, texts ...string) float64 {
+	var maxWidth float64
+	for _, text := range texts {
+		maxWidth = max(maxWidth, MeasureStringWidth(text, font))
+	}
+	return maxWidth
+}
+
+// MaxStringHeight returns the maximum TotalHeight across all provided texts measured with the given font.
+func MaxStringHeight(font style.Font, texts ...string) float64 {
+	var maxHeight float64
+	for _, text := range texts {
+		maxHeight = max(maxHeight, MeasureStringHeight(text, font))
+	}
+	return maxHeight
+}
+
+// MeasureBlockWidth returns the width a text block would occupy with the given style (text width + horizontal padding).
+func MeasureBlockWidth(text string, s style.Style) float64 {
+	return MeasureStringWidth(text, s.Font) + s.PaddingLeft + s.PaddingRight
+}
+
+// MeasureBlockHeight returns the height a text block would occupy with the given style (text height + vertical padding).
+func MeasureBlockHeight(text string, s style.Style) float64 {
+	return MeasureStringHeight(text, s.Font) + s.PaddingTop + s.PaddingBottom
+}
