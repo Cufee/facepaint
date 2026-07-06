@@ -81,45 +81,40 @@ func (content *contentImage) Style() style.StyleOptions {
 func (content *contentImage) Render(layers *layerContext, pos Position) error {
 	computed := content.style.Computed()
 	dimensions := content.dimensions()
-	ctx, err := layers.layer(computed.ZIndex)
-	if err != nil {
-		return err
-	}
 
-	childCtx := newLayer(dimensions.Width, dimensions.Height)
+	registerBackdrop(layers, computed, dimensions, pos)
 
-	// apply border radius
-	drawBackgroundPath(childCtx, computed, dimensions, Position{0, 0})
-	childCtx.Clip()
+	return renderWithFilter(layers, computed, dimensions, pos, func(ctx *layer, pos Position) error {
+		childCtx := newLayer(dimensions.Width, dimensions.Height)
 
-	if computed.BackgroundColor != nil {
-		childCtx.SetColor(computed.BackgroundColor)
-		childCtx.Clear()
-	}
-	if computed.Debug {
-		childCtx.SetColor(getDebugColor())
-		childCtx.DrawRectangle(0, 0, float64(dimensions.Width), float64(dimensions.Height))
-		childCtx.Stroke()
-	}
-
-	image := imaging.Fill(content.image, dimensions.Width, dimensions.Height, computed.BackgroundPosition.Imaging(), imaging.Lanczos)
-	if computed.Blur > 0 {
-		image = imaging.Blur(image, computed.Blur)
-	}
-
-	if computed.Color != nil {
-		mask := gg.NewContextForImage(image)
-		childCtx.SetMask(mask.AsMask())
-		childCtx.SetColor(computed.Color)
 		drawBackgroundPath(childCtx, computed, dimensions, Position{0, 0})
-		childCtx.Fill()
+		childCtx.Clip()
 
+		if computed.BackgroundColor != nil {
+			childCtx.SetColor(computed.BackgroundColor)
+			childCtx.Clear()
+		}
+		if computed.Debug {
+			childCtx.SetColor(getDebugColor())
+			childCtx.DrawRectangle(0, 0, float64(dimensions.Width), float64(dimensions.Height))
+			childCtx.Stroke()
+		}
+
+		img := imaging.Fill(content.image, dimensions.Width, dimensions.Height, computed.BackgroundPosition.Imaging(), imaging.Lanczos)
+
+		if computed.Color != nil {
+			mask := gg.NewContextForImage(img)
+			childCtx.SetMask(mask.AsMask())
+			childCtx.SetColor(computed.Color)
+			drawBackgroundPath(childCtx, computed, dimensions, Position{0, 0})
+			childCtx.Fill()
+
+			ctx.DrawImage(childCtx.Image(), ceil(pos.X), ceil(pos.Y))
+			return nil
+		}
+
+		childCtx.DrawImage(img, 0, 0)
 		ctx.DrawImage(childCtx.Image(), ceil(pos.X), ceil(pos.Y))
 		return nil
-	}
-
-	childCtx.DrawImage(image, 0, 0)
-	ctx.DrawImage(childCtx.Image(), ceil(pos.X), ceil(pos.Y))
-
-	return nil
+	})
 }

@@ -102,69 +102,55 @@ func (content *contentText) Render(layers *layerContext, pos Position) error {
 	if computed.Font == nil {
 		return errors.New("font cannot be nil")
 	}
-	ctx, err := layers.layer(computed.ZIndex)
-	if err != nil {
-		return err
-	}
 
-	size := content.measure(computed.Font)
+	registerBackdrop(layers, computed, dimensions, pos)
 
-	if computed.Blur > 0 {
-		// replace the context
-		parentPosition := pos
-		pos = Position{X: 0, Y: 0}
-		ctx = newLayer(dimensions.Width, dimensions.Height)
-		defer func() {
-			// blur the result and paste onto the parent layer
-			parent, _ := layers.layer(computed.ZIndex)
-			img := imaging.Blur(ctx.Image(), computed.Blur)
-			parent.DrawImage(img, ceil(parentPosition.X), ceil(parentPosition.Y))
-		}()
-	}
+	return renderWithFilter(layers, computed, dimensions, pos, func(ctx *layer, pos Position) error {
+		size := content.measure(computed.Font)
 
-	if computed.BackgroundColor != nil {
-		ctx.SetColor(computed.BackgroundColor)
-		drawBackgroundPath(ctx, computed, dimensions, pos)
-		ctx.Fill()
-	}
-	if computed.BackgroundImage != nil {
-		background := imaging.Fill(computed.BackgroundImage, dimensions.Width, dimensions.Height, imaging.Center, imaging.Lanczos)
-		ctx.DrawImage(background, ceil(pos.X), ceil(pos.Y))
-	}
+		if computed.BackgroundColor != nil {
+			ctx.SetColor(computed.BackgroundColor)
+			drawBackgroundPath(ctx, computed, dimensions, pos)
+			ctx.Fill()
+		}
+		if computed.BackgroundImage != nil {
+			background := imaging.Fill(computed.BackgroundImage, dimensions.Width, dimensions.Height, imaging.Center, imaging.Lanczos)
+			ctx.DrawImage(background, ceil(pos.X), ceil(pos.Y))
+		}
 
-	if computed.Debug {
-		ctx.SetColor(getDebugColor())
-		ctx.DrawRectangle(pos.X, pos.Y, float64(dimensions.Width), float64(dimensions.Height))
-		ctx.Stroke()
-	}
+		if computed.Debug {
+			ctx.SetColor(getDebugColor())
+			ctx.DrawRectangle(pos.X, pos.Y, float64(dimensions.Width), float64(dimensions.Height))
+			ctx.Stroke()
+		}
 
-	var lastX, lastY float64 = pos.X + computed.PaddingLeft, pos.Y + computed.PaddingTop + 1
+		var lastX, lastY = pos.X + computed.PaddingLeft, pos.Y + computed.PaddingTop + 1
 
-	switch computed.JustifyContent {
-	case style.JustifyContentEnd:
-		lastX += float64(dimensions.Width) - size.TotalWidth
-	case style.JustifyContentCenter:
-		lastX += (float64(dimensions.Width) - dimensions.paddingAndGapsX - size.TotalWidth) / 2
-	}
-	switch computed.AlignItems {
-	case style.AlignItemsEnd:
-		lastY += float64(dimensions.Height) - size.TotalHeight
-	case style.AlignItemsCenter:
-		lastY += (float64(dimensions.Height) - dimensions.paddingAndGapsY - size.TotalHeight) / 2
-	}
+		switch computed.JustifyContent {
+		case style.JustifyContentEnd:
+			lastX += float64(dimensions.Width) - size.TotalWidth
+		case style.JustifyContentCenter:
+			lastX += (float64(dimensions.Width) - dimensions.paddingAndGapsX - size.TotalWidth) / 2
+		}
+		switch computed.AlignItems {
+		case style.AlignItemsEnd:
+			lastY += float64(dimensions.Height) - size.TotalHeight
+		case style.AlignItemsCenter:
+			lastY += (float64(dimensions.Height) - dimensions.paddingAndGapsY - size.TotalHeight) / 2
+		}
 
-	// Render text
-	face, close := computed.Font.Face()
-	defer close()
+		face, close := computed.Font.Face()
+		defer close()
 
-	ctx.SetFontFace(face)
-	ctx.SetColor(computed.Color)
+		ctx.SetFontFace(face)
+		ctx.SetColor(computed.Color)
 
-	for _, str := range strings.Split(content.value, "\n") {
-		lastY += size.LineHeight
-		x, y := lastX, lastY-size.LineOffset
-		ctx.DrawString(str, x, y)
-	}
+		for _, str := range strings.Split(content.value, "\n") {
+			lastY += size.LineHeight
+			x, y := lastX, lastY-size.LineOffset
+			ctx.DrawString(str, x, y)
+		}
 
-	return nil
+		return nil
+	})
 }

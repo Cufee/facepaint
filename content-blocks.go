@@ -2,7 +2,7 @@ package facepaint
 
 import (
 	"errors"
-	"image"
+	"maps"
 
 	"github.com/cufee/facepaint/style"
 	"github.com/nao1215/imaging"
@@ -117,9 +117,7 @@ func (content *contentBlocks) Type() blockContentType {
 func (content *contentBlocks) Layers() map[int]struct{} {
 	var layers = make(map[int]struct{}, len(content.value))
 	for _, block := range content.value {
-		for i, v := range block.Layers() {
-			layers[i] = v
-		}
+		maps.Copy(layers, block.Layers())
 	}
 	return layers
 }
@@ -131,10 +129,6 @@ func (content *contentBlocks) Style() style.StyleOptions {
 func (content *contentBlocks) Render(layers *layerContext, pos Position) error {
 	computed := content.style.Computed()
 	dimensions := content.dimensions()
-	ctx, err := layers.layer(computed.ZIndex)
-	if err != nil {
-		return err
-	}
 
 	if computed.Position == style.PositionAbsolute {
 		if computed.Left != 0 {
@@ -149,50 +143,30 @@ func (content *contentBlocks) Render(layers *layerContext, pos Position) error {
 		}
 	}
 
-	if computed.Blur > 0 {
-		// replace the context
-		parentPosition := pos
-		pos = Position{X: 0, Y: 0}
-		ctx = newLayer(dimensions.Width, dimensions.Height)
-		defer func() {
-			// blur the result and paste onto the parent layer
-			parent, _ := layers.layer(computed.ZIndex)
-			img := imaging.Blur(ctx.Image(), computed.Blur)
-			parent.DrawImage(img, ceil(parentPosition.X), ceil(parentPosition.Y))
-		}()
-	}
-	if computed.BlurBackground > 0 {
-		layers.registerHook(computed.ZIndex, layerHookBeforeRender(func(frame, layer *layer) {
-			backdrop := imaging.Crop(frame.Image(), image.Rect(ceil(pos.X), ceil(pos.Y), ceil(pos.X)+dimensions.Width, ceil(pos.Y)+dimensions.Height))
-			backdrop = imaging.Blur(backdrop, computed.BlurBackground)
+	registerBackdrop(layers, computed, dimensions, pos)
 
-			drawBackgroundPath(frame, computed, dimensions, pos)
-			frame.Clip()
-			frame.DrawImage(backdrop, ceil(pos.X), ceil(pos.Y))
-			frame.ResetClip()
-		}))
-	}
+	return renderWithFilter(layers, computed, dimensions, pos, func(ctx *layer, pos Position) error {
+		if computed.BackgroundColor != nil && len(computed.Backdrop) == 0 {
+			ctx.SetColor(computed.BackgroundColor)
+			drawBackgroundPath(ctx, computed, dimensions, pos)
+			ctx.Fill()
+		}
+		if computed.BackgroundImage != nil {
+			background := imaging.Fill(computed.BackgroundImage, dimensions.Width, dimensions.Height, imaging.Center, imaging.Lanczos)
+			ctx.DrawImage(background, ceil(pos.X), ceil(pos.Y))
+		}
 
-	if computed.BackgroundColor != nil {
-		ctx.SetColor(computed.BackgroundColor)
-		drawBackgroundPath(ctx, computed, dimensions, pos)
-		ctx.Fill()
-	}
-	if computed.BackgroundImage != nil {
-		background := imaging.Fill(computed.BackgroundImage, dimensions.Width, dimensions.Height, imaging.Center, imaging.Lanczos)
-		ctx.DrawImage(background, ceil(pos.X), ceil(pos.Y))
-	}
+		if computed.Debug {
+			ctx.SetColor(getDebugColor())
+			ctx.DrawRectangle(pos.X, pos.Y, float64(dimensions.Width), float64(dimensions.Height))
+			ctx.Stroke()
+		}
 
-	if computed.Debug {
-		ctx.SetColor(getDebugColor())
-		ctx.DrawRectangle(pos.X, pos.Y, float64(dimensions.Width), float64(dimensions.Height))
-		ctx.Stroke()
-	}
+		applyBlocksGrowth(computed, dimensions, content.value...)
 
-	applyBlocksGrowth(computed, dimensions, content.value...)
-
-	var originX, originY = pos.X + computed.PaddingLeft, pos.Y + computed.PaddingTop
-	return renderBlocksContent(layers, computed, dimensions, Position{X: originX, Y: originY}, content.value...)
+		var originX, originY = pos.X + computed.PaddingLeft, pos.Y + computed.PaddingTop
+		return renderBlocksContent(layers, computed, dimensions, Position{X: originX, Y: originY}, content.value...)
+	})
 }
 
 func renderBlocksContent(ctx *layerContext, containerStyle style.Style, container contentDimensions, pos Position, blocks ...*Block) error {
@@ -232,71 +206,66 @@ func renderBlocksContent(ctx *layerContext, containerStyle style.Style, containe
 			if blockStyle.Left != 0 {
 				posX += blockStyle.Left
 			} else if blockStyle.Right != 0 {
-				posX += float64(container.Width) - blockStyle.Right
+				posX += float64(container.Width-blockSize.Width) - blockStyle.Right
 			}
 			if blockStyle.Top != 0 {
 				posY += blockStyle.Top
 			} else if blockStyle.Bottom != 0 {
-				posY += float64(container.Height) - blockStyle.Bottom
+				posY += float64(container.Height-blockSize.Height) - blockStyle.Bottom
 			}
-		}
-
-		switch containerStyle.Direction {
-		case style.DirectionVertical:
-			// align content vertically
-			switch containerStyle.JustifyContent {
-			case style.JustifyContentCenter:
-				posY += float64(container.Height-contentHeightTotal) / 2
-			case style.JustifyContentEnd:
-				posY += float64(container.Height - contentHeightTotal)
-			case style.JustifyContentSpaceAround:
-				if relativeBlocks == 1 {
+		} else {
+			switch containerStyle.Direction {
+			case style.DirectionVertical:
+				switch containerStyle.JustifyContent {
+				case style.JustifyContentCenter:
 					posY += float64(container.Height-contentHeightTotal) / 2
+				case style.JustifyContentEnd:
+					posY += float64(container.Height - contentHeightTotal)
+				case style.JustifyContentSpaceAround:
+					if relativeBlocks == 1 {
+						posY += float64(container.Height-contentHeightTotal) / 2
+					}
+					if relativeBlocks > 1 {
+						posY += float64(container.Height-contentHeightTotal) / float64(relativeBlocks+1)
+					}
+				case style.JustifyContentSpaceBetween:
+					if i > 0 && relativeBlocks > 1 {
+						posY += float64(container.Height-contentHeightTotal) / float64(relativeBlocks-1)
+					}
 				}
-				if relativeBlocks > 1 {
-					posY += float64(container.Height-contentHeightTotal) / float64(relativeBlocks+1)
-				}
-			case style.JustifyContentSpaceBetween:
-				if i > 0 && relativeBlocks > 1 {
-					posY += float64(container.Height-contentHeightTotal) / float64(relativeBlocks-1)
-				}
-			}
 
-			// align content horizontally
-			switch containerStyle.AlignItems {
-			case style.AlignItemsCenter:
-				posX += float64(container.Width-ceil(container.paddingX)-blockSize.Width) / 2
-			case style.AlignItemsEnd:
-				posX += float64(container.Width - ceil(container.paddingX) - blockSize.Width)
-			}
-		default: // DirectionHorizontal
-			// align content horizontally
-			switch containerStyle.JustifyContent {
-			case style.JustifyContentCenter:
-				posX += float64(container.Width-contentWidthTotal) / 2
-			case style.JustifyContentEnd:
-				posX += float64(container.Width - contentWidthTotal)
-			case style.JustifyContentSpaceAround:
-				if relativeBlocks == 1 {
+				switch containerStyle.AlignItems {
+				case style.AlignItemsCenter:
+					posX += float64(container.Width-ceil(container.paddingX)-blockSize.Width) / 2
+				case style.AlignItemsEnd:
+					posX += float64(container.Width - ceil(container.paddingX) - blockSize.Width)
+				}
+			default: // DirectionHorizontal
+				switch containerStyle.JustifyContent {
+				case style.JustifyContentCenter:
 					posX += float64(container.Width-contentWidthTotal) / 2
+				case style.JustifyContentEnd:
+					posX += float64(container.Width - contentWidthTotal)
+				case style.JustifyContentSpaceAround:
+					if relativeBlocks == 1 {
+						posX += float64(container.Width-contentWidthTotal) / 2
+					}
+					if relativeBlocks > 1 {
+						posX += float64(container.Width-contentWidthTotal) / float64(relativeBlocks+1)
+					}
+				case style.JustifyContentSpaceBetween:
+					if i > 0 && relativeBlocks > 1 {
+						posX += float64(container.Width-contentWidthTotal) / float64(relativeBlocks-1)
+					}
 				}
-				if relativeBlocks > 1 {
-					posX += float64(container.Width-contentWidthTotal) / float64(relativeBlocks+1)
-				}
-			case style.JustifyContentSpaceBetween:
-				if i > 0 && relativeBlocks > 1 {
-					posX += float64(container.Width-contentWidthTotal) / float64(relativeBlocks-1)
+
+				switch containerStyle.AlignItems {
+				case style.AlignItemsCenter:
+					posY += float64(container.Height-ceil(container.paddingY)-blockSize.Height) / 2
+				case style.AlignItemsEnd:
+					posY += float64(container.Height - ceil(container.paddingY) - blockSize.Height)
 				}
 			}
-
-			// align content vertically
-			switch containerStyle.AlignItems {
-			case style.AlignItemsCenter:
-				posY += float64(container.Height-ceil(container.paddingY)-blockSize.Height) / 2
-			case style.AlignItemsEnd:
-				posY += float64(container.Height - ceil(container.paddingY) - blockSize.Height)
-			}
-
 		}
 
 		err := block.content.Render(ctx, Position{posX, posY})

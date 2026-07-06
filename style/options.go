@@ -111,10 +111,11 @@ func SetBasis(value BasisValue) styleOption {
 	}
 }
 
-func SetBlur(value float64) styleOption {
-	return func(s *Style) {
-		s.Blur = value
-	}
+func SetBackdrop(effects ...Effect) styleOption {
+	return func(s *Style) { s.Backdrop = effects }
+}
+func SetFilter(effects ...Effect) styleOption {
+	return func(s *Style) { s.Filter = effects }
 }
 
 func SetBackground(value image.Image) styleOption {

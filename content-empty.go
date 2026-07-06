@@ -47,20 +47,20 @@ func (content *contentEmpty) Style() style.StyleOptions {
 func (content *contentEmpty) Render(layers *layerContext, pos Position) error {
 	computed := content.style.Computed()
 	dimensions := content.dimensions()
-	ctx, err := layers.layer(computed.ZIndex)
-	if err != nil {
-		return err
-	}
 
-	if computed.BackgroundColor != nil {
-		ctx.SetColor(computed.BackgroundColor)
-		drawBackgroundPath(ctx, computed, dimensions, pos)
-		ctx.Fill()
-	}
-	if computed.Debug {
-		ctx.SetColor(getDebugColor())
-		ctx.DrawRectangle(pos.X, pos.Y, float64(dimensions.Width), float64(dimensions.Height))
-		ctx.Stroke()
-	}
-	return nil
+	registerBackdrop(layers, computed, dimensions, pos)
+
+	return renderWithFilter(layers, computed, dimensions, pos, func(ctx *layer, pos Position) error {
+		if computed.BackgroundColor != nil {
+			ctx.SetColor(computed.BackgroundColor)
+			drawBackgroundPath(ctx, computed, dimensions, pos)
+			ctx.Fill()
+		}
+		if computed.Debug {
+			ctx.SetColor(getDebugColor())
+			ctx.DrawRectangle(pos.X, pos.Y, float64(dimensions.Width), float64(dimensions.Height))
+			ctx.Stroke()
+		}
+		return nil
+	})
 }
