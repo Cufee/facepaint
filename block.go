@@ -16,7 +16,7 @@ func NewBlock(content BlockContent) *Block {
 type blockContentType int
 
 func (t blockContentType) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("%d", t)), nil
+	return fmt.Appendf(nil, "%d", t), nil
 }
 func (t blockContentType) String() string {
 	return fmt.Sprintf("%d", t)

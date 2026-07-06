@@ -101,15 +101,12 @@ type Style struct {
 	MinWidth  float64
 	MinHeight float64
 
-	Blur           float64
-	BlurBackground float64
-
 	Font Font
 
 	Color              color.Color
 	BackgroundColor    color.Color
 	BackgroundImage    image.Image
-	BackgroundPosition positionAnchor // will also set image anchor position when using image block type
+	BackgroundPosition positionAnchor
 
 	Overflow overflowValue
 
@@ -138,6 +135,11 @@ type Style struct {
 	BorderRadiusTopRight    float64
 	BorderRadiusBottomLeft  float64
 	BorderRadiusBottomRight float64
+
+	// Backdrop effects run on the frame behind the block before compositing.
+	Backdrop []Effect
+	// Filter effects run on the block's content before compositing.
+	Filter []Effect
 
 	ZIndex int
 }
